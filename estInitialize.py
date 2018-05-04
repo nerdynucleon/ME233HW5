@@ -14,14 +14,23 @@ def estInitialize():
     x = 0.0
     y = 0.0
     theta = np.pi/4.0
-    color = 'green' 
+
+    state = np.array([x,y,theta])
+
+    x_var = 2.5
+    y_var = 2.5
+    theta_var = np.pi/8.0
+    
+    #R_DELTA = 0.05 * R
+    #B_DELTA = 0.1 * B
+
+    var = np.diag([x_var, y_var, theta_var])
+
     # note that there is *absolutely no prescribed format* for this internal state.
     # You can put in it whatever you like. Probably, you'll want to keep the position
     # and angle, and probably you'll remove the color.
-    internalState = [x,
-                     y,
-                     theta, 
-                     color
+    internalState = [state,
+                     var
                      ]
 
     return internalState
