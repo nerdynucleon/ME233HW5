@@ -11,7 +11,7 @@ def estInitialize():
     #
 
     # Number of Particles
-    N = 5000
+    N = 10000
     # Initialize Particles State
     x = 0.0
     y = 0.0

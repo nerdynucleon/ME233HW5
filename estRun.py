@@ -50,7 +50,7 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     # Noise Constants
     slip_scale = 0.1
     std_pedal_speed = 0.5
-    std_steering_angle = 0.2
+    std_steering_angle = 0.05
 
     # Add noise
     pedalSpeed += np.random.normal(scale = std_pedal_speed, size=particles.shape[1])
@@ -102,7 +102,7 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
         zero_mean = np.array([0.0, 0.0, 0.0])
 
         d = particles.shape[0]
-        K = 0.01
+        K = 0.1
         N = particles.shape[1] 
 
         std_x_rough = K * (N ** (-1/d)) * np.abs(np.max(x) - np.min(x))

@@ -23,7 +23,7 @@ err_ang_max = 0.0
 
 #provide the index of the experimental run you would like to use.
 # Note that using "0" means that you will load the measurement calibration data.
-for experimentalRun in range(1,5):
+for experimentalRun in range(1,6):
 
     #print('Loading the data file #', experimentalRun)
     experimentalData = np.genfromtxt ('data/run_{0:03d}.csv'.format(experimentalRun), delimiter=',')
