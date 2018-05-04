@@ -1,9 +1,10 @@
 from __future__ import division
 import numpy as np
 import scipy as sp
-from scipy import linalg
+from scipy.stats import norm
 
 #NO OTHER IMPORTS ALLOWED (However, you're allowed to import e.g. scipy.linalg)
+#('x =', '1.35', 'my =', '1.31', 'mangle =', '2.95', 'rad')
 
 def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     # In this function you implement your estimator. The function arguments
@@ -31,72 +32,82 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     ## DEFINE CONSTANTS
     GEAR_RATIO = 5.0
 
-    state = internalStateIn[0]
-    var = internalStateIn[1]
+    particles = internalStateIn[0]
+    system = internalStateIn[1]
 
-    x = state[0]
-    y = state[1]
-    theta = state[2]
+    x = particles[0,:]
+    y = particles[1,:]
+    theta = particles[2,:]
 
-    R = 0.425
-    B = 0.8
+    R = system[0,:]
+    B = system[1,:]
 
     v = pedalSpeed * R * GEAR_RATIO
 
     # Calculate Time Derivatives
     xdot = v * np.cos(theta)
     ydot = v * np.sin(theta)
-    thetadot = v / B * np.tan(steeringAngle)
-
-    # Calculate Variance Updates
-    A = np.array([[1.0, 0.0, -dt*v*np.sin(theta)],[0.0, 1.0, dt*v*np.cos(theta)],[0.0, 0.0, 1.0]])
-    var = A.dot(var.dot(A.T))
+    thetadot = v * np.tan(steeringAngle) / B 
 
     # Calculate State Updates
     x = x + dt * xdot
     y = y + dt * ydot
     theta = theta + dt * thetadot
 
-    state = np.array([x,y,theta])
+    particles = np.stack((x,y,theta))
 
     if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
         # Have a valid measurement
+
         # GPS Characterization Data
+        # GPS is zero mean
+        # R = np.diag([1.08807010408, 2.98447239424])
+        var_meas_0 = 1.08807010408
+        var_meas_1 = 2.98447239424
 
-        R = np.diag([1.08807010408, 2.98447239424])
+        prob_meas_0 = norm.pdf(measurement[0], (x + 0.5*B*np.cos(theta)), np.sqrt(var_meas_0))
+        prob_meas_1 = norm.pdf(measurement[1], (y + 0.5*B*np.sin(theta)), np.sqrt(var_meas_1))
+        prob = prob_meas_0 * prob_meas_1
 
-        # Try Extended Kalman Filter Update
-        H = np.array([[1.0, 0.0, -B/2*np.sin(theta)],[0.0, 1.0, B/2*np.cos(theta)]])
-        M = np.eye(2)
+        # Normalize PDF
+        prob /= np.sum(prob)
 
-        K = var.dot(H.T.dot(sp.linalg.inv(H.dot(var.dot(H.T)) + M.dot(R.dot(M.T)))))
+        # Resample
+        particles_idx = np.random.choice(np.arange(particles.shape[1]), particles.shape[1], p=prob)
+        particles = np.stack((x[particles_idx],y[particles_idx],theta[particles_idx]))
+
+        # Resample System parameters - no roughening
+        system = np.stack((R[particles_idx], B[particles_idx]))
+
+        # Roughening
+        x = particles[0,:]
+        y = particles[1,:]
+        theta = particles[2,:]
+
+        zero_mean = np.array([0.0, 0.0, 0.0])
+
+        K = 0.01
+        std_x_rough = np.abs(np.max(x) - np.min(x))
+        std_y_rough = np.abs(np.max(y) - np.min(y))
+        std_theta_rough = np.abs( np.mod(np.max(theta) - np.min(theta) + np.pi, 2*np.pi ) - np.pi)
+        var_roughening = K * np.diag([std_x_rough**2.0, std_y_rough**2.0, std_theta_rough**2.0])
+
+        particles += np.random.multivariate_normal(zero_mean, var_roughening, particles.shape[1]).T
         
-        z1_expected = x + 0.5 * B * np.cos(theta)
-        z2_expected = y + 0.5 * B * np.sin(theta)
-        z_expected = np.array([z1_expected, z2_expected])
-
-        state = np.array([x,y,theta])
-
-        state = state + K.dot(np.array([measurement[0], measurement[1]]) - z_expected)
-        var = (np.eye(3) - K.dot(H)).dot(var)
-
-        # weights = [0.5, 0.5]
-        # x = np.average([x, measurement[0] - 0.5 * B * np.cos(theta)], weights=weights)
-        # y = np.average([y, measurement[1] - 0.5 * B * np.sin(theta)], weights=weights)
-        # #weights = [0.95, 0.05]
-        # theta = theta #np.average([theta, np.arctan2((measurement[1] - y),(measurement[0] - x))], weights=weights)
-        # state = np.array([x,y,theta])
-
     #### OUTPUTS ####
     # Update the internal state (will be passed as an argument to the function
     # at next run), must obviously be compatible with the format of
     # internalStateIn:
 
-    internalState = [state,
-                     var
+    internalState = [particles,
+                    system
                     ]
 
+    x_est = np.mean(particles[0,:])
+    y_est = np.mean(particles[1,:])
+    theta_est = np.mean(particles[2,:])
+
     # DO NOT MODIFY THE OUTPUT FORMAT:
-    return x, y, theta, internalState 
+    return x_est, y_est, theta_est, internalState 
 
 
