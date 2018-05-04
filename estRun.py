@@ -50,9 +50,12 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
 
     if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
         # have a valid measurement
-        weights = [0.75, 0.25]
-        x = np.average([x, measurement[0] - 0.5 * BASE * np.cos(theta)], weights=weights)
-        y = np.average([y, measurement[1] - 0.5 * BASE * np.sin(theta)], weights=weights)
+        # GPS Characterization
+        dx = -0.203591818573
+        dy = 1.27324946455
+        weights = [0.5, 0.5]
+        x = np.average([x, measurement[0] - 0.5 * BASE * np.cos(theta) - dx], weights=weights)
+        y = np.average([y, measurement[1] - 0.5 * BASE * np.sin(theta) - dy], weights=weights)
         theta = theta
 
     #### OUTPUTS ####

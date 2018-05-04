@@ -17,56 +17,64 @@ import matplotlib.pyplot as plt
 from estRun import estRun
 from estInitialize import estInitialize
 
+err_x_max = 0.0
+err_y_max = 0.0
+err_ang_max = 0.0
+
 #provide the index of the experimental run you would like to use.
 # Note that using "0" means that you will load the measurement calibration data.
-experimentalRun = 1
+for experimentalRun in range(1,6):
 
-print('Loading the data file #', experimentalRun)
-experimentalData = np.genfromtxt ('data/run_{0:03d}.csv'.format(experimentalRun), delimiter=',')
+    #print('Loading the data file #', experimentalRun)
+    experimentalData = np.genfromtxt ('data/run_{0:03d}.csv'.format(experimentalRun), delimiter=',')
 
-#===============================================================================
-# Here, we run your estimator's initialization
-#===============================================================================
-print('Running the initialization')
-internalState = estInitialize()
+    #===============================================================================
+    # Here, we run your estimator's initialization
+    #===============================================================================
+   # print('Running the initialization')
+    internalState = estInitialize()
 
-numDataPoints = experimentalData.shape[0]
+    numDataPoints = experimentalData.shape[0]
 
-#Here we will store the estimated position and orientation, for later plotting:
-estimatedPosition_x = np.zeros([numDataPoints,])
-estimatedPosition_y = np.zeros([numDataPoints,])
-estimatedAngle = np.zeros([numDataPoints,])
+    #Here we will store the estimated position and orientation, for later plotting:
+    estimatedPosition_x = np.zeros([numDataPoints,])
+    estimatedPosition_y = np.zeros([numDataPoints,])
+    estimatedAngle = np.zeros([numDataPoints,])
 
-print('Running the system')
-dt = experimentalData[1,0] - experimentalData[0,0]
-for k in range(numDataPoints):
-    t = experimentalData[k,0]
-    gamma = experimentalData[k,1]
-    omega = experimentalData[k,2]
-    measx = experimentalData[k,3]
-    measy = experimentalData[k,4]
-    
-    #run the estimator:
-    x, y, theta, internalState = estRun(t, dt, internalState, gamma, omega, (measx, measy))
+    #print('Running the system')
+    dt = experimentalData[1,0] - experimentalData[0,0]
+    for k in range(numDataPoints):
+        t = experimentalData[k,0]
+        gamma = experimentalData[k,1]
+        omega = experimentalData[k,2]
+        measx = experimentalData[k,3]
+        measy = experimentalData[k,4]
+        
+        #run the estimator:
+        x, y, theta, internalState = estRun(t, dt, internalState, gamma, omega, (measx, measy))
 
-    #keep track:
-    estimatedPosition_x[k] = x
-    estimatedPosition_y[k] = y
-    estimatedAngle[k] = theta
-    
+        #keep track:
+        estimatedPosition_x[k] = x
+        estimatedPosition_y[k] = y
+        estimatedAngle[k] = theta
+        
 
-print('Done running')
-#make sure the angle is in [-pi,pi]
-estimatedAngle = np.mod(estimatedAngle+np.pi,2*np.pi)-np.pi
+    #print('Done running')
+    #make sure the angle is in [-pi,pi]
+    estimatedAngle = np.mod(estimatedAngle+np.pi,2*np.pi)-np.pi
 
-posErr_x = estimatedPosition_x - experimentalData[:,5]
-posErr_y = estimatedPosition_y - experimentalData[:,6]
-angErr   = np.mod(estimatedAngle - experimentalData[:,7]+np.pi,2*np.pi)-np.pi
+    posErr_x = estimatedPosition_x - experimentalData[:,5]
+    posErr_y = estimatedPosition_y - experimentalData[:,6]
+    angErr   = np.mod(estimatedAngle - experimentalData[:,7]+np.pi,2*np.pi)-np.pi
+    #print('Final error: ')
+    print('x =',format(posErr_x[-1],'.2f'),'m' + 'y =',format(posErr_y[-1],'.2f'),'m' + 'angle =',format(angErr[-1],'.2f'),'rad')
+    err_x_max = max(err_x_max, np.abs(posErr_x[-1]))
+    err_y_max = max(err_y_max, np.abs(posErr_y[-1]))
+    err_ang_max = max(err_ang_max, np.abs(angErr[-1]))
 
-print('Final error: ')
-print('   pos x =',posErr_x[-1],'m')
-print('   pos y =',posErr_y[-1],'m')
-print('   angle =',angErr[-1],'rad')
+print('Maximum Errors')
+print('x =',format(err_x_max,'.2f'),'m' + 'y =',format(err_y_max,'.2f'),'m' + 'angle =',format(err_ang_max,'.2f'),'rad')
+
 
 ax = np.sum(np.abs(posErr_x))/numDataPoints
 ay = np.sum(np.abs(posErr_y))/numDataPoints
@@ -87,6 +95,7 @@ if not np.isnan(score):
 # make some plots:
 #===============================================================================
 #feel free to add additional plots, if you like.
+
 print('Generating plots')
 
 figTopView, axTopView = plt.subplots(1, 1)
