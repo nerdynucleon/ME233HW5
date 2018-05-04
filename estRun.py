@@ -4,7 +4,12 @@ import scipy as sp
 from scipy.stats import norm
 
 #NO OTHER IMPORTS ALLOWED (However, you're allowed to import e.g. scipy.linalg)
-#('x =', '1.35', 'my =', '1.31', 'mangle =', '2.95', 'rad')
+
+def max_diff_angles(angles):
+    angles = np.mod(angles, 2.0*np.pi)
+    idx_larger_pi = angles > np.pi
+    angles[idx_larger_pi] = (2.0*np.pi) - angles[idx_larger_pi]
+    return np.max(angles) - np.min(angles)
 
 def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     # In this function you implement your estimator. The function arguments
@@ -42,7 +47,17 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     R = system[0,:]
     B = system[1,:]
 
+    # Noise Constants
+    slip_scale = 0.1
+    std_pedal_speed = 0.5
+    std_steering_angle = 0.2
+
+    # Add noise
+    pedalSpeed += np.random.normal(scale = std_pedal_speed, size=particles.shape[1])
+    steeringAngle += np.random.normal(scale = std_steering_angle, size=particles.shape[1])
+
     v = pedalSpeed * R * GEAR_RATIO
+    v -= np.random.exponential(scale = slip_scale, size = particles.shape[1])
 
     # Calculate Time Derivatives
     xdot = v * np.cos(theta)
@@ -86,11 +101,14 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
 
         zero_mean = np.array([0.0, 0.0, 0.0])
 
+        d = particles.shape[0]
         K = 0.01
-        std_x_rough = np.abs(np.max(x) - np.min(x))
-        std_y_rough = np.abs(np.max(y) - np.min(y))
-        std_theta_rough = np.abs( np.mod(np.max(theta) - np.min(theta) + np.pi, 2*np.pi ) - np.pi)
-        var_roughening = K * np.diag([std_x_rough**2.0, std_y_rough**2.0, std_theta_rough**2.0])
+        N = particles.shape[1] 
+
+        std_x_rough = K * (N ** (-1/d)) * np.abs(np.max(x) - np.min(x))
+        std_y_rough = K * (N ** (-1/d)) * np.abs(np.max(y) - np.min(y))
+        std_theta_rough = K * (N ** (-1/d)) * max_diff_angles(theta)
+        var_roughening = np.diag([std_x_rough**2.0, std_y_rough**2.0, std_theta_rough**2.0])
 
         particles += np.random.multivariate_normal(zero_mean, var_roughening, particles.shape[1]).T
         

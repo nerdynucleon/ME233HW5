@@ -11,7 +11,7 @@ def estInitialize():
     #
 
     # Number of Particles
-    N = 10000
+    N = 5000
     # Initialize Particles State
     x = 0.0
     y = 0.0
@@ -19,7 +19,7 @@ def estInitialize():
 
     x_std = 7
     y_std = 7
-    theta_std = np.pi/2.0
+    theta_std = np.pi/3.0
 
     particle_mean = np.array([x,y,theta])
     particle_var = np.diag([x_std, y_std, theta_std])
