@@ -4,11 +4,11 @@ import scipy as sp
 
 np.random.seed(64)
 def estInitialize():
+    # Author - Alexandre Chong
     # Fill in whatever initialization you'd like here. This function generates
     # the internal state of the estimator at time 0. You may do whatever you
     # like here, but you must return something that is in the format as may be
     # used by your run() function.
-    #
 
     # Number of Particles
     N = 10000
@@ -36,9 +36,7 @@ def estInitialize():
 
     system = np.stack((np.random.uniform(R - R_DELTA, R + R_DELTA, N), np.random.uniform(B - B_DELTA, B + B_DELTA, N)))
 
-    # note that there is *absolutely no prescribed format* for this internal state.
-    # You can put in it whatever you like. Probably, you'll want to keep the position
-    # and angle, and probably you'll remove the color.
+    # Create Internal State Data Structure
     internalState = [particles,
                     system
                      ]

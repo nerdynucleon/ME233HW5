@@ -23,7 +23,7 @@ err_ang_max = 0.0
 
 #provide the index of the experimental run you would like to use.
 # Note that using "0" means that you will load the measurement calibration data.
-for experimentalRun in range(1,6):
+for experimentalRun in range(1,2):
 
     #print('Loading the data file #', experimentalRun)
     experimentalData = np.genfromtxt ('data/run_{0:03d}.csv'.format(experimentalRun), delimiter=',')
@@ -67,7 +67,7 @@ for experimentalRun in range(1,6):
     posErr_y = estimatedPosition_y - experimentalData[:,6]
     angErr   = np.mod(estimatedAngle - experimentalData[:,7]+np.pi,2*np.pi)-np.pi
     #print('Final error: ')
-    print('x =',format(posErr_x[-1],'.2f'),'m' + 'y =',format(posErr_y[-1],'.2f'),'m' + 'angle =',format(angErr[-1],'.2f'),'rad')
+    print(str(experimentalRun),'x =',format(posErr_x[-1],'.2f'),'m' + 'y =',format(posErr_y[-1],'.2f'),'m' + 'angle =',format(angErr[-1],'.2f'),'rad')
     err_x_max = max(err_x_max, np.abs(posErr_x[-1]))
     err_y_max = max(err_y_max, np.abs(posErr_y[-1]))
     err_ang_max = max(err_ang_max, np.abs(angErr[-1]))
@@ -126,11 +126,11 @@ axHist[4].plot(experimentalData[:,0], experimentalData[:,2], 'g-', label='m')
 axHist[0].legend()
 
 axHist[-1].set_xlabel('Time [s]')
-axHist[0].set_ylabel('Position x [m]')
-axHist[1].set_ylabel('Position y [m]')
-axHist[2].set_ylabel('Angle theta [rad]')
-axHist[3].set_ylabel('Steering angle gamma [rad]')
-axHist[4].set_ylabel('Pedal speed omega [rad/s]')
+axHist[0].set_ylabel('x [m]')
+axHist[1].set_ylabel('y [m]')
+axHist[2].set_ylabel('theta[rad]')
+axHist[3].set_ylabel('gamma[rad]')
+axHist[4].set_ylabel('w[rad/s]')
 
 plt.savefig('./report/timeseries.png')
 

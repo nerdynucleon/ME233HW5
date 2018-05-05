@@ -73,7 +73,7 @@
 
 \pretitle{\begin{center}\Huge\bfseries} % Article title formatting
 \posttitle{\end{center}} % Article title closing formatting
-\title{ME 233 - Homework 5: State Estimation} % Article title
+\title{ME 233 - Homework 5: State Estimation - Particle Filter} % Article title
 \author{%
 \textsc{Alexandre Chong} \\[1ex] % Your name
 \normalsize University of California, Berkeley \\ % Your institution
@@ -105,8 +105,9 @@ The following system states and variables will be approximated through the parti
 \item $B$ - base length of bike
 \end{itemize}
 %------------------------------------------------
+\section{Modeling}
 
-\section{GPS Characterization}
+\subsection{GPS Characterization}
 Looking at the data from run 0. Where the bike is not moving. It can be seen that the GPS measurements are zero mean and approximately normally distributed.
 
 \begin{table}[h!]
@@ -144,15 +145,13 @@ $0.002$ & $0.04$ & $1.088$ & $2.984$\\
 
 The $\theta$ values from the GPS measurement data are bimodally distributed with the maximum likelihood centered around the true value (Figure \ref{fig:hist}).
 
-\section{Modeling}
-
 \subsection{System Dynamics}
 The following equations describe how the state of the bike evolves with time. Note that the bike's actual linear speed, velocity, and steering angle readings are modeled as not being exactly as reported.
 
 \begin{center}
-$\hat{v} =  \hat{\omega} R N + \nu_v$
-
 $\hat{\omega} = \omega + \nu_\omega$
+
+$\hat{v} =  \hat{\omega} R N + \nu_v$
 
 $\hat{\gamma} = \gamma + \nu_\gamma$
 
@@ -162,6 +161,13 @@ $y[k+1] = y[k]  + \Delta t \hat{v} sin(\theta)$
 
 $\theta[k+1] = \theta[k] + \Delta t \frac{\hat{v}}{B} tan(\hat{\gamma})$
 \end{center}
+
+\begin{itemize}
+\item $N$ - gear ratio
+\item $\gamma$ - reported steering input
+\item $\omega$ - reported pedal speed
+\item $\Delta t$ - time step
+\end{itemize}
 
 \subsection{Noise Modeling}
 
@@ -184,7 +190,7 @@ $\nu_\gamma \sim N(0, \gamma_p) $
 \hline
 $v_p$ & $\omega_p$ & $\gamma_p$ \\ [0.5ex] 
 \hline
-$0.05$ & $0.5$ & $0.05$\\
+$0.05$ & $0.10$ & $0.05$\\
 \hline
 \end{tabular}
 \end{table}
@@ -242,7 +248,44 @@ $\sigma_y = K |y_{max} - y_{min}| N^{-\frac{1}{d}}$
 $\sigma_\theta = K |\Delta\theta_{max}| N^{-\frac{1}{d}}$
 \end{center}
 
-In this case $K = 0.01, N = 10000, d = 3$
+In this case $K = 0.1, N = 10000, d = 3$
+
+\section{Design Decisions and Justifications}
+
+The particle filter was chosen for the following reasons:
+\begin{itemize}
+\item Code does not have to run in real time
+\item PF with "many" particles will out-perform the other techniques we learned in class for nonlinear systems (e.g. UKF, EKF)
+\end{itemize}
+
+Roughening was not added to system parameters R and B as they do not change with time.
+
+Noise was normally distributed as there is no other reason to suspect otherwise.
+
+The variance for roughening was picked based on the suggestion presented in class.
+
+N = 10,000 was selected as it seemed "large" enough. Was unsure if 15 second constraint was to execute one run or all the runs.
+
+\section{Evaluation and Discussion}
+
+\begin{figure}[h]
+\caption{Run 1: Measurements and State Estimate}
+\label{fig:top}
+\centering
+\includegraphics[width=0.5\textwidth]{topview.png}
+\end{figure}
+
+\begin{figure}[h]
+\caption{Run 1: Measurements, State Estimate, Inputs}
+\label{fig:time}
+\centering
+\includegraphics[width=0.5\textwidth]{timeseries.png}
+\end{figure}
+
+The particle filter does reasonably well at going through all the points (Figure \ref{fig:top}) and maintaining a relatively smooth trajectory that matches the given inputs (Figure \ref{fig:time}).
+
+Estimation could be greatly improved with a more lower variance gps sensor, a higher gps sample rate, and/or an additional sensor to help provide heading information (e.g. compass).
+
 %----------------------------------------------------------------------------------------
 
 \end{document}
