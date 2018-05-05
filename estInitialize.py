@@ -17,12 +17,12 @@ def estInitialize():
     y = 0.0
     theta = np.pi/4.0
 
-    x_std = 7
-    y_std = 7
-    theta_std = np.pi/3.0
+    x_var = 2**2
+    y_var = 2**2
+    theta_var = (np.pi/4.0)**2
 
     particle_mean = np.array([x,y,theta])
-    particle_var = np.diag([x_std, y_std, theta_std])
+    particle_var = np.diag([x_var, y_var, theta_var])
     
     # Create State Particles
     particles = np.random.multivariate_normal(particle_mean, particle_var, N)

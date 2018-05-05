@@ -94,14 +94,155 @@
 
 \section{Introduction}
 
-\lettrine[nindent=0em,lines=3]{S}tate
+\lettrine[nindent=0em,lines=3]{T}o estimate the position and heading of this bicycle. I decided to use a particle filter.
+
+The following system states and variables will be approximated through the particle filter.
+\begin{itemize}
+\item $x$ - position of bike in x-y plane
+\item $y$ - position of bike in x-y plane
+\item $\theta$ - heading of bike in x-y plane
+\item $R$ - radius of bike wheel
+\item $B$ - base length of bike
+\end{itemize}
 %------------------------------------------------
 
-\section{Findings}
+\section{GPS Characterization}
+Looking at the data from run 0. Where the bike is not moving. It can be seen that the GPS measurements are zero mean and approximately normally distributed.
 
-\subsection{Part 1: N = 3 1D Case}
+\begin{table}[h!]
+\centering
+\caption{GPS True Values}
+\label{table:alg1}
+\begin{tabular}{rrr}
+\hline
+$X$ & $Y$ & $\theta$ \\ [0.5ex] 
+\hline
+$0.20644$ & $1.2318$ & $1.0909$\\
+\hline
+\end{tabular}
+\end{table}
 
+\begin{table}[h!]
+\centering
+\caption{GPS Calibration}
+\label{table:alg1}
+\begin{tabular}{rrrr}
+\hline
+$\bar{X}$ & $\bar{Y}$ & $Var(X)$ & $Var(Y)$\\ [0.5ex] 
+\hline
+$0.002$ & $0.04$ & $1.088$ & $2.984$\\
+\hline
+\end{tabular}
+\end{table}
 
+\begin{figure}[h]
+\caption{Statistics of GPS Calibration Data}
+\label{fig:hist}
+\centering
+\includegraphics[width=0.5\textwidth]{hist.png}
+\end{figure}
+
+The $\theta$ values from the GPS measurement data are bimodally distributed with the maximum likelihood centered around the true value (Figure \ref{fig:hist}).
+
+\section{Modeling}
+
+\subsection{System Dynamics}
+The following equations describe how the state of the bike evolves with time. Note that the bike's actual linear speed, velocity, and steering angle readings are modeled as not being exactly as reported.
+
+\begin{center}
+$\hat{v} =  \hat{\omega} R N + \nu_v$
+
+$\hat{\omega} = \omega + \nu_\omega$
+
+$\hat{\gamma} = \gamma + \nu_\gamma$
+
+$x[k+1] = x[k] + \Delta t \hat{v}cos(\theta)$
+
+$y[k+1] = y[k]  + \Delta t \hat{v} sin(\theta)$
+
+$\theta[k+1] = \theta[k] + \Delta t \frac{\hat{v}}{B} tan(\hat{\gamma})$
+\end{center}
+
+\subsection{Noise Modeling}
+
+The following distributions were used to inject process noise into the particle filter.
+$N(0,\omega_p)$ represents a zero-mean normally distributed random variable with $\omega_p$ standard deviation.
+
+\begin{center}
+$\nu_v \sim  N(0, v_p)$
+
+$\nu_\omega \sim N(0, \omega_p)$
+
+$\nu_\gamma \sim N(0, \gamma_p) $
+\end{center}
+
+\begin{table}[h!]
+\centering
+\caption{Noise Parameters}
+\label{table:noise}
+\begin{tabular}{rrr}
+\hline
+$v_p$ & $\omega_p$ & $\gamma_p$ \\ [0.5ex] 
+\hline
+$0.05$ & $0.5$ & $0.05$\\
+\hline
+\end{tabular}
+\end{table}
+
+The noise parameters in Table \ref{table:noise} are guesses as to what the actual noise looks like.
+
+\subsection{Particle Filter}
+
+\subsubsection{Initialization}
+The particle filter is initialized as follows:
+
+\begin{table}[h!]
+\centering
+\caption{Initial State - Normally Distributed}
+\label{table:noise}
+\begin{tabular}{rrrr}
+\hline
+ &$X$ & $Y$ & $\theta$ \\ [0.5ex] 
+\hline
+mean & $0$ & $0$ & $\frac{\pi}{4}$\\
+std & $2.0$ & $2.0$ & $\frac{\pi}{4}$\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{System Parameters - Uniformly Distributed}
+\label{table:noise}
+\begin{tabular}{rrr}
+\hline
+ &$R$ & $B$\\ [0.5ex] 
+\hline
+min & $0.425 - 0.425\times0.05$ & $0.8 - 0.8 \times 0.1$\\
+max & $0.425 + 0.425\times0.05$ & $0.8 + 0.8 \times 0.1$\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Procedure}
+
+After initialization, the particles are propagated though the noisy system model at every time step. At time steps with measurements the conditional probability density is created using the normally distributed GPS model.
+
+The weighted particles are then resampled and roughening is added. Roughening is only added to the x, y, and $\theta$ states as R and B are constant with time.
+
+\subsubsection{Roughening}
+
+Roughening is normally distributed and zero mean, it uses the following standard deviation:
+
+\begin{center}
+$\sigma_x = K |x_{max} - x_{min}| N^{-\frac{1}{d}}$
+
+$\sigma_y = K |y_{max} - y_{min}| N^{-\frac{1}{d}}$
+
+$\sigma_\theta = K |\Delta\theta_{max}| N^{-\frac{1}{d}}$
+\end{center}
+
+In this case $K = 0.01, N = 10000, d = 3$
 %----------------------------------------------------------------------------------------
 
 \end{document}

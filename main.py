@@ -106,6 +106,8 @@ axTopView.legend()
 axTopView.set_xlabel('x-position [m]')
 axTopView.set_ylabel('y-position [m]')
 
+plt.savefig('./report/topview.png')
+
 figHist, axHist = plt.subplots(5, 1, sharex=True)
 axHist[0].plot(experimentalData[:,0], experimentalData[:,5], 'k:.', label='true')
 axHist[0].plot(experimentalData[:,0], experimentalData[:,3], 'rx', label='Meas')
@@ -129,6 +131,8 @@ axHist[1].set_ylabel('Position y [m]')
 axHist[2].set_ylabel('Angle theta [rad]')
 axHist[3].set_ylabel('Steering angle gamma [rad]')
 axHist[4].set_ylabel('Pedal speed omega [rad/s]')
+
+plt.savefig('./report/timeseries.png')
 
 print('Done')
 plt.show()

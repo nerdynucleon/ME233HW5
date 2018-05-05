@@ -48,16 +48,15 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     B = system[1,:]
 
     # Noise Constants
-    slip_scale = 0.1
+    std_velocity = 0.05
     std_pedal_speed = 0.5
     std_steering_angle = 0.05
 
     # Add noise
+    v = pedalSpeed * R * GEAR_RATIO
     pedalSpeed += np.random.normal(scale = std_pedal_speed, size=particles.shape[1])
     steeringAngle += np.random.normal(scale = std_steering_angle, size=particles.shape[1])
-
-    v = pedalSpeed * R * GEAR_RATIO
-    v -= np.random.exponential(scale = slip_scale, size = particles.shape[1])
+    v += np.random.normal(scale = std_velocity, size=particles.shape[1])
 
     # Calculate Time Derivatives
     xdot = v * np.cos(theta)
